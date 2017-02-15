@@ -4,12 +4,14 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -23,7 +25,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener,  GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
     public static final int LOCATION_REQUEST_CODE = 1;
     private GoogleMap mMap;
     private static double x = 42.236323;
@@ -31,11 +33,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private SupportMapFragment mFirstMapFragment;
     private Marker marker;
     private GoogleApiClient apiClient;
+    private static double MIx, MIy;
+
 
     // Ejemplo: Crear círculo con radio de 100m
     // y centro (42.236954,  -8.712717)
     LatLng center = new LatLng(42.236954, -8.712717);
-    int radius = 1000;
+    int radius = 150;
 
 
     @Override
@@ -51,18 +55,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //Registrar escucha onMapReadyCallback
         mFirstMapFragment.getMapAsync(this);
 
+        apiClient = new GoogleApiClient.Builder(this)
+                .enableAutoManage(this, this)
+                .addConnectionCallbacks(this)
+                .addApi(LocationServices.API)
+                .build();
+
     }
 
-
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -102,9 +102,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         // Añadir círculo
         Circle circle = mMap.addCircle(circleOptions);
+        mMap.setOnMapClickListener(this);
 
 
     }
+
 
 
     @Override
@@ -116,13 +118,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     permissions[0].equals(android.Manifest.permission.ACCESS_FINE_LOCATION) &&
                     grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
                     return;
                 }
                 mMap.setMyLocationEnabled(true);
@@ -135,15 +130,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
+
+
+
+
     public void calcularDistancia() {
-        /*String la= String.valueOf(lat1);
-        String lo =String.valueOf(lng1);
-        Toast.makeText(this, la+" "+lo, Toast.LENGTH_LONG).show();*/
 
         double earthRadius = 6372.795477598;
 
-        double dLat = Math.toRadians(x - y);
-        double dLng = Math.toRadians(x - y);
+        double dLat = Math.toRadians(MIx - x);
+        double dLng = Math.toRadians(MIy - y);
         double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
                 Math.cos(Math.toRadians(y)) * Math.cos(Math.toRadians(x)) *
                         Math.sin(dLng / 2) * Math.sin(dLng / 2);
@@ -162,31 +158,31 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
+
+
+
     @Override
     public void onMapClick(LatLng latLng) {
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
             return;
         }
         Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(apiClient);
-        rest(lastLocation);
+        Posicion(lastLocation);
         calcularDistancia();
 
     }
 
-    private void rest(Location loc) {
+
+
+
+
+    private void Posicion(Location loc) {
 
         if (loc != null) {
-            x = loc.getLatitude();
-            y = loc.getLongitude();
+            MIx = loc.getLatitude();
+            MIy = loc.getLongitude();
             //Tosat para saber longitud y latitud de mi posicion
-            // Toast.makeText(this, String.valueOf(lat1)+" "+String.valueOf(lng1), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, String.valueOf(MIx) + " " + String.valueOf(MIy), Toast.LENGTH_LONG).show();
         } else {
 
             Toast.makeText(this, "Latitud y Longitud desconocidas", Toast.LENGTH_LONG).show();
@@ -195,5 +191,43 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     }
-}
+
+
+
+
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        //Conectado correctamente a Google Play Services
+
+        if (ActivityCompat.checkSelfPermission(this,
+                android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    LOCATION_REQUEST_CODE);
+        } else {
+            //Obtener lat y long de mi posicion y se lo pasamos a Posicion.
+            Location lastLocation =
+                    LocationServices.FusedLocationApi.getLastLocation(apiClient);
+
+            Posicion(lastLocation);
+        }
+    }
+
+
+
+        @Override
+        public void onConnectionSuspended ( int i){
+
+        }
+
+        @Override
+        public void onConnectionFailed (@NonNull ConnectionResult connectionResult){
+
+        }
+    }
+
+
+
 
