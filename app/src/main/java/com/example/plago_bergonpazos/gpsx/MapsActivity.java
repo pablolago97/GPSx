@@ -1,5 +1,6 @@
 package com.example.plago_bergonpazos.gpsx;
 
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
@@ -25,7 +26,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener,  GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener,  GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnMapLongClickListener {
     public static final int LOCATION_REQUEST_CODE = 1;
     private GoogleMap mMap;
     private static double x = 42.236323;
@@ -34,12 +35,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Marker marker;
     private GoogleApiClient apiClient;
     private static double MIx, MIy;
-
+    private Circle circle;
 
     // Ejemplo: Crear círculo con radio de 100m
     // y centro (42.236954,  -8.712717)
     LatLng center = new LatLng(42.236954, -8.712717);
-    int radius = 150;
+    int radius = 300;
 
 
     @Override
@@ -93,6 +94,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         }
 
+       //Circulo creado (parametros)
         CircleOptions circleOptions = new CircleOptions()
                 .center(center)
                 .radius(radius)
@@ -101,8 +103,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .fillColor(Color.argb(32, 33, 150, 243));
 
         // Añadir círculo
-        Circle circle = mMap.addCircle(circleOptions);
+        circle = mMap.addCircle(circleOptions);
+
+        //Escucha de 'Clicl'
         mMap.setOnMapClickListener(this);
+        mMap.setOnMapLongClickListener(this);
 
 
     }
@@ -146,11 +151,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         double dist = earthRadius * c;
         double distMet = dist * 1000;
-        String distancia = String.valueOf(distMet);
+        String distancia = String.valueOf((int)distMet);
 
-        Toast.makeText(this, distancia + " metros ", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "Estás a "+distancia + " metros ", Toast.LENGTH_LONG).show();
 
-        if (distMet <= 20) {
+        if (distMet <= 25) {
             marker.setVisible(true);
         } else {
             marker.setVisible(false);
@@ -182,7 +187,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             MIx = loc.getLatitude();
             MIy = loc.getLongitude();
             //Tosat para saber longitud y latitud de mi posicion
-            Toast.makeText(this, String.valueOf(MIx) + " " + String.valueOf(MIy), Toast.LENGTH_LONG).show();
+            //Toast.makeText(this, String.valueOf(MIx) + " " + String.valueOf(MIy), Toast.LENGTH_LONG).show();
         } else {
 
             Toast.makeText(this, "Latitud y Longitud desconocidas", Toast.LENGTH_LONG).show();
@@ -226,7 +231,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         public void onConnectionFailed (@NonNull ConnectionResult connectionResult){
 
         }
+
+    @Override
+    public void onMapLongClick(LatLng latLng) {
+        Intent intent = new Intent(getBaseContext(), ScannerActivity.class);
+        int code = 4545; // Esto puede ser cualquier código.
+        startActivityForResult(intent, code);
     }
+}
 
 
 
